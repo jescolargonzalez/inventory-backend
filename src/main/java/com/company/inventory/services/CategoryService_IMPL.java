@@ -82,7 +82,44 @@ public class CategoryService_IMPL implements I_CategoryService{
             return new ResponseEntity<CategoryResponseRest>(response,HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return new ResponseEntity<CategoryResponseRest>(response,HttpStatus.OK);
+    }
+
+    @Override
+    @Transactional
+    public ResponseEntity<CategoryResponseRest> update(Category category, Long id) {
+
+        CategoryResponseRest response = new CategoryResponseRest();
+        List<Category> list = new ArrayList<>();
+
+        try {
+            Optional<Category> categorySearch = categoryDao.findById(id);
+            if(categorySearch.isPresent()){
+                // se procedera a actualizar el registro
+                categorySearch.get().setName(category.getName());
+                categorySearch.get().setDescription(category.getDescription());
+
+                Category categoryToUpdate = categoryDao.save(categorySearch.get());
+                if(categoryToUpdate != null){
+                    list.add(categoryToUpdate);
+                    response.getCategoryResponse().setCategory(list);
+                    response.setMetadata("Respuesta ok", "00", "Categoria Actualizada");
+                }else{
+                    response.setMetadata("Respuesta fallida", "-1", "Categoria NO actualizada");
+                    return new ResponseEntity<CategoryResponseRest>(response,HttpStatus.BAD_REQUEST);
+                }
+
+            }else{
+                response.setMetadata("Respuesta fallida", "-1", "Categoria NO encontrada");
+                return new ResponseEntity<CategoryResponseRest>(response,HttpStatus.NOT_FOUND);
+            }
+        
+        } catch (Exception e) {
+            response.setMetadata("Respuesta fallida", "-1", "Error al actualizar categoria");
+            e.getStackTrace();
+            return new ResponseEntity<CategoryResponseRest>(response,HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return new ResponseEntity<CategoryResponseRest>(response,HttpStatus.OK);
     }     
 
-    
+
 }
