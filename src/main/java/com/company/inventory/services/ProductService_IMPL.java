@@ -91,5 +91,37 @@ public class ProductService_IMPL implements I_ProductService{
             return new ResponseEntity<ProductResponseRest>(response,HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return new ResponseEntity<ProductResponseRest>(response,HttpStatus.OK);
+    }
+
+
+    //Filtro de busqueda
+    @Override
+    @Transactional (readOnly = true)
+    public ResponseEntity<ProductResponseRest> searchByName(String name) {
+        ProductResponseRest response = new ProductResponseRest();
+        List<Product> list = new ArrayList<>();
+        List<Product> listAux = new ArrayList<>();
+        try {
+        //search product by name
+            listAux = productDao.findByNameContainingIgnoreCase(name);            
+        
+            if(listAux.size()>0){
+                listAux.stream().forEach((p) -> {
+                    byte[] imageDescompressed = Util.decompressZLib(p.getPicture());
+                    p.setPicture(imageDescompressed);
+                    list.add(p);
+                });
+                response.getProductResponse().setProducts(list);
+                response.setMetadata("OK", "00", "productos encontrados");                 
+            }else{
+                response.setMetadata("FAIL", "-1", "Productos no encontrados");
+                return new ResponseEntity<ProductResponseRest>(response,HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            e.getStackTrace();
+            response.setMetadata("FAIL", "-1", "Error al buscar el producto por nombre");
+            return new ResponseEntity<ProductResponseRest>(response,HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return new ResponseEntity<ProductResponseRest>(response,HttpStatus.OK);
     }    
 }
