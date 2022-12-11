@@ -139,5 +139,80 @@ public class ProductService_IMPL implements I_ProductService{
             return new ResponseEntity<ProductResponseRest>(response,HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return new ResponseEntity<ProductResponseRest>(response,HttpStatus.OK);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResponseEntity<ProductResponseRest> search() {
+        ProductResponseRest response = new ProductResponseRest();
+        List<Product> list = new ArrayList<>();
+        List<Product> listAux = new ArrayList<>();
+        try {
+        //search product by name
+            listAux = (List<Product>) productDao.findAll();                  
+            if(listAux.size()>0){
+                listAux.stream().forEach((p) -> {
+                    byte[] imageDescompressed = Util.decompressZLib(p.getPicture());
+                    p.setPicture(imageDescompressed);
+                    list.add(p);
+                });
+                response.getProductResponse().setProducts(list);
+                response.setMetadata("OK", "00", "productos encontrados");                 
+            }else{
+                response.setMetadata("FAIL", "-1", "Productos no encontrados");
+                return new ResponseEntity<ProductResponseRest>(response,HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            e.getStackTrace();
+            response.setMetadata("FAIL", "-1", "Error al buscar productos");
+            return new ResponseEntity<ProductResponseRest>(response,HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return new ResponseEntity<ProductResponseRest>(response,HttpStatus.OK);
+    }
+
+    @Override
+    @Transactional
+    public ResponseEntity<ProductResponseRest> update(Product product, Long categoryId, Long id) {
+        ProductResponseRest response = new ProductResponseRest();
+        List<Product> list = new ArrayList<>();
+//Validacion de categorias para el producto
+        try {
+          //search category to set in the product object  
+            Optional<Category> category =  categoryDao.findById(categoryId);
+            if(category.isPresent()){
+                product.setCategory(category.get());
+            }else{
+                response.setMetadata("FAIL", "-1", "Categoria no encontrada asociada al producto");
+                return new ResponseEntity<ProductResponseRest>(response,HttpStatus.NOT_FOUND);
+            }
+//------------------------------------------
+          //search product to update
+            Optional<Product> productSearch = productDao.findById(id);
+
+            if(productSearch.isPresent()){
+                //Update product
+                productSearch.get().setCantidad(product.getCantidad());
+                productSearch.get().setCategory(product.getCategory());
+                productSearch.get().setName(product.getName());
+                productSearch.get().setPicture(product.getPicture());
+                productSearch.get().setPrecio(product.getPrecio());
+                
+                Product productToUpdate = productDao.save(productSearch.get());
+
+                if(productToUpdate != null){
+                    list.add(productToUpdate);
+                    response.getProductResponse().setProducts(list);
+                    response.setMetadata("OK", "00", "producto actualizado");
+                }
+            }else{
+                response.setMetadata("FAIL", "-1", "producto no actualizado");
+                return new ResponseEntity<ProductResponseRest>(response,HttpStatus.BAD_REQUEST);
+            }
+        } catch (Exception e) {
+            e.getStackTrace();
+            response.setMetadata("FAIL", "-1", "Error al actualizar el producto");
+            return new ResponseEntity<ProductResponseRest>(response,HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return new ResponseEntity<ProductResponseRest>(response,HttpStatus.OK);
     }    
 }
