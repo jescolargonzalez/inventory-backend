@@ -19,7 +19,7 @@ import com.company.inventory.response.ProductResponseRest;
 import com.company.inventory.services.I_ProductService;
 import com.company.inventory.util.Util;
 
-@CrossOrigin(origins = { "http://localhost:4200" })
+@CrossOrigin(origins={"http://localhost:4200"})
 @RestController
 @RequestMapping("/api/v1")
 public class ProductRestController {
