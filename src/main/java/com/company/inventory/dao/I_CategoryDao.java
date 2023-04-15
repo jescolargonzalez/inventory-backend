@@ -5,4 +5,5 @@ import com.company.inventory.model.Category;
 
 public interface I_CategoryDao extends CrudRepository<Category,Long> {
 
+
 }
